@@ -1,379 +1,184 @@
-# Flyto2 Core
+<p align="center">
+  <img src="https://flyto2.com/logo.png" alt="Flyto2" width="96" />
+</p>
 
-**AI said it finished. Flyto2 shows the proof.**
+<h1 align="center">Flyto Core</h1>
 
-A Python execution engine for AI agents. It runs browser and API work as
-explicit steps, records what every step did, and replays from the step that
-failed — instead of re-running the whole job.
+<p align="center">
+  <strong>AI can talk. Flyto Core lets it do things.</strong><br />
+  One open-source software engine for real actions — from browser tabs and APIs to ROS 2 robots through external adapters.
+</p>
 
-The current public inventory is **482 registry-backed modules** across **89
-catalog categories**, including triggers, queue modules, workflow versioning,
-metering hooks, browser automation, API calls, data transforms, verification,
-files, and crypto.
+<p align="center">
+  <a href="README.md">English</a> ·
+  <a href="README.ja.md">日本語</a> ·
+  <a href="README.ko.md">한국어</a> ·
+  <a href="README.zh-CN.md">简体中文</a> ·
+  <a href="README.es.md">Español</a> ·
+  <a href="README.pt-BR.md">Português (BR)</a>
+</p>
 
-[![PyPI version](https://img.shields.io/pypi/v/flyto-core.svg)](https://pypi.org/project/flyto-core/)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+<p align="center">
+  <a href="https://pypi.org/project/flyto-core/"><img src="https://img.shields.io/pypi/v/flyto-core" alt="PyPI" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="Apache-2.0" /></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10%2B-3776AB" alt="Python 3.10+" /></a>
+</p>
 
 <!-- mcp-name: io.github.flytohub/flyto-core -->
 
-[flyto2.com](https://flyto2.com) · [Cloud Automation](https://flyto2.com/cloud/) · [Documentation](https://docs.flyto2.com) · [MCP Docs](https://docs.flyto2.com/mcp/) · [YouTube](https://www.youtube.com/@Flyto2)
+## An AI agent needs more than a chat box
+
+Your AI has a plan. Now what?
+
+**Open a website. Grab some data. Call an API. Save a file. Run the next step.**
+Flyto Core makes these actions into reusable workflows instead of a pile of one-off scripts.
+
+And it doesn't stop at software screens. **Flyto2 already connects to ROS 2 robots using external adapters.** Core supplies the common execution and capability-contract layer; the robotics package talks to the robot's own ROS 2 stack. The robot is not running Flyto Core firmware.
+
+> **One core. Different worlds.**
+>
+> 🌐 **Web** — browser automation and data extraction  
+> 🔌 **Software** — APIs, files, MCP tools and workflows  
+> 🤖 **Robotics** — ROS 2 through separate, host-approved adapters  
+> 🦾 **Manipulation** — LeRobot arm integration is being built as a separate pack  
+> 🏠 **IoT** — device-specific packs can connect smart equipment without bloating Core
+
+This is a **software project**, not a robot model, a motor controller, or an all-in-one hardware SDK.
+
+## See it move
 
 <p align="center">
-  <img src="demo/flyto-core-demo.gif" alt="flyto-core demo: API pipeline → replay → browser automation" width="720">
+  <img src="demo/flyto-core-demo.gif" alt="Flyto Core running a browser and API workflow with visible steps" width="760" />
 </p>
 
----
+*The recording above demonstrates a software workflow, not a physical-robot run.*
 
-## Try it in 30 seconds
+## Run something in 30 seconds
 
-```bash
-pip install flyto-core[browser] && playwright install chromium
+Install the browser extra and try a real workflow:
+
+~~~bash
+python -m pip install "flyto-core[browser]"
+playwright install chromium
 flyto recipe competitor-intel --url https://github.com/pricing
-```
+~~~
 
-```
-  Step  1/12  browser.launch         ✓      420ms
-  Step  2/12  browser.goto           ✓    1,203ms
-  Step  3/12  browser.evaluate       ✓       89ms
-  Step  4/12  browser.screenshot     ✓    1,847ms  → saved intel-desktop.png
-  Step  5/12  browser.viewport       ✓       12ms  → 390×844
-  Step  6/12  browser.screenshot     ✓    1,621ms  → saved intel-mobile.png
-  Step  7/12  browser.viewport       ✓        8ms  → 1280×720
-  Step  8/12  browser.performance    ✓    5,012ms  → Web Vitals captured
-  Step  9/12  browser.evaluate       ✓       45ms
-  Step 10/12  browser.evaluate       ✓       11ms
-  Step 11/12  file.write             ✓        3ms  → saved intel-report.json
-  Step 12/12  browser.close          ✓       67ms
+You'll get a step-by-step execution trace, browser captures and a report. Want to see what's built in?
 
-  ✓ Done in 10.3s — 12/12 steps passed
-```
-
-Screenshots captured. Performance metrics extracted. JSON report saved. **Every step traced.**
-
----
-
-## What happens when step 8 fails?
-
-With a shell script you re-run the whole thing. With flyto-core:
-
-```bash
-flyto replay --from-step 8
-```
-
-Steps 1–7 are instant. Only step 8 re-executes. Full context preserved.
-
----
-
-## How is this different?
-
-| | Playwright / Selenium | Shell scripts | flyto-core |
-|-|----------------------|---------------|------------|
-| Step 8 fails | Re-run everything | Re-run everything | `flyto replay --from-step 8` |
-| What happened at step 3? | Add print(), re-run | Add echo, re-run | Full trace: input, output, timing |
-| Browser + API + file I/O | Write glue code | 3 languages | All built-in |
-| Share with team | "Clone my repo" | "Clone my repo" | `pip install flyto-core` |
-| Run in CI | Wrap in pytest/bash | Fragile | `flyto run workflow.yaml` |
-
----
-
-## 3 recipes to try now
-
-```bash
-# Competitive pricing: screenshots + Web Vitals + JSON report
-flyto recipe competitor-intel --url https://competitor.com/pricing
-
-# Full site audit: SEO + accessibility + performance
-flyto recipe full-audit --url https://your-site.com
-
-# Web scraping → CSV export
-flyto recipe scrape-to-csv --url https://news.ycombinator.com --selector ".titleline a"
-```
-
-Every recipe is traced. Every run is replayable. [See all 41 recipes ->](docs/RECIPES.md)
-
----
-
-## Install
-
-```bash
-pip install flyto-core            # Core engine + CLI + MCP server
-pip install flyto-core[browser]   # + browser automation (Playwright)
-playwright install chromium        # one-time browser setup
-```
-
----
-
-## Write Your Own Workflows
-
-Recipes are just YAML files. Write your own:
-
-```yaml
-name: price-monitor
-steps:
-  - id: open
-    module: browser.launch
-    params: { headless: true }
-
-  - id: page
-    module: browser.goto
-    params: { url: "https://competitor.com/pricing" }
-
-  - id: prices
-    module: browser.evaluate
-    params:
-      script: |
-        JSON.stringify([...document.querySelectorAll('.price')].map(e => e.textContent))
-
-  - id: save
-    module: file.write
-    params: { path: "prices.json", content: "${prices.result}" }
-
-  - id: close
-    module: browser.close
-```
-
-```bash
-flyto run price-monitor.yaml
-```
-
-Every run produces an execution trace and state snapshots. If step 3 fails, replay from step 3 — no re-running the whole thing.
-
----
-
-## Usage
-
-<details>
-<summary><b>CLI</b> — run workflows from the terminal</summary>
-
-```bash
-# Run a built-in recipe
-flyto recipe site-audit --url https://example.com
-
-# Run your own YAML workflow
-flyto run my-workflow.yaml
-
-# List all recipes
+~~~bash
 flyto recipes
-```
+flyto modules
+~~~
 
-</details>
+Or run your own YAML workflow:
 
-<details>
-<summary><b>MCP Server</b> — for Claude Code, Cursor, Windsurf</summary>
+~~~bash
+flyto run my-workflow.yaml
+~~~
 
-```bash
-pip install flyto-core
-claude mcp add flyto-core -- python -m core.mcp_server
-```
+**482 registry-backed modules, 89 catalog categories and 41 packaged recipes** in the current Core inventory. You don't have to install every optional integration to use the engine.
 
-Or add to your MCP config:
-```json
-{
-  "mcpServers": {
-    "flyto-core": {
-      "command": "python",
-      "args": ["-m", "core.mcp_server"]
-    }
-  }
-}
-```
+## The stuff that makes it powerful
 
-Your AI gets all 482 modules as tools.
+| You want to… | Flyto Core gives you… |
+| --- | --- |
+| Turn an idea into actual software actions | A workflow engine with typed, reusable steps |
+| Let an agent use existing tools | An MCP server and a module registry |
+| Connect another tool or device stack | Installable packs and host-bound capability contracts |
+| Understand what ran | Structured traces and execution evidence |
+| Continue after a failure | Checkpoints and replay controls, subject to each action's safety rules |
+| Keep physical actions under control | Declared limits, explicit host authority and safe-stop contracts |
 
-</details>
+**Important:** a command returning “OK” isn't automatically proof that the real-world task succeeded. Core records execution and can judge declared evidence; a Flyto2 host / AI Space coordinates permissions, independent observations and the final mission verdict.
 
-<details>
-<summary><b>HTTP API</b> — for integrations and remote execution</summary>
+## One engine, not one giant dependency tree
 
-```bash
-pip install flyto-core[api]
-flyto serve
-# ✓ flyto-core running on 127.0.0.1:8333
-```
+~~~text
+User or AI agent
+      |
+      v
+Flyto2 host / AI Space   <-- goal, choice of tools, approvals
+      |
+      v
+Flyto Core              <-- workflow, contracts, execution, trace
+      |
+      +--> Browser / APIs / files / MCP
+      |
+      +--> Approved device pack
+               |
+               +--> ROS 2 adapter  --> ROS 2 robot
+               +--> LeRobot pack   --> robot arm (integration in progress)
+               +--> IoT adapter    --> smart device
+~~~
 
-| Endpoint | Purpose |
-|----------|---------|
-| `POST /v1/workflow/run` | Execute workflow with evidence + trace |
-| `POST /v1/workflow/{id}/replay/{step}` | Replay from any step |
-| `POST /v1/execute` | Execute a single module |
-| `GET /v1/modules` | Discover all modules |
-| `POST /mcp` | MCP Streamable HTTP transport |
+**Here's the rule:** one device software stack, one separate pack.
 
-</details>
+ROS 2 stays in the robotics adapter stack. LeRobot gets its own pack. An ESP32 integration or another smart appliance gets the pack appropriate to its actual software stack. **No vendor-specific motor code goes into Flyto Core.**
 
-<details>
-<summary><b>Python API</b> — for programmatic use</summary>
+An adapter declares what a machine can do and what it needs. The trusted execution host decides whether that action is allowed. **Discovery never equals permission.** A model's confidence isn't a safety guarantee, and a failed or unknown physical action isn't blindly retried.
 
-```python
+### What is ready — and what still needs proof
+
+- **Core software:** workflows, browser/API/file modules, MCP interface, capability contracts, execution traces, recovery tools and adapter-pack mechanisms are implemented.
+- **ROS 2 connection:** Flyto2 uses an external ROS 2 robotics stack with real TurtleBot3 development work. This is **not** a built-in ROS 2 implementation inside Core, and end-to-end physical acceptance of the current integration is still pending.
+- **Robot arms:** a portable pick-and-place contract example exists; the AM-ARM200 / LeRobot adapter is a separate work in progress. Don't treat the example as a tested arm driver.
+- **Smart devices:** optional adapters and integrations live outside Core. Compatibility and safety have to be tested per actual device.
+
+We would rather show the boundary clearly than pretend every robot or refrigerator works out of the box.
+
+## Plug it into your tools
+
+### MCP — give your coding agent a workflow toolbox
+
+~~~bash
+python -m pip install flyto-core
+python -m core.mcp_server
+~~~
+
+You can configure that command as an MCP server in a compatible client. MCP exposes software capabilities; it does **not** grant physical-motion permission by itself.
+
+### Python — call a module
+
+~~~python
 import asyncio
 from core.modules.registry import ModuleRegistry
 
 async def main():
     result = await ModuleRegistry.execute(
         "string.reverse",
-        params={"text": "Hello"},
-        context={}
+        params={"text": "Hello, world!"},
+        context={},
     )
-    print(result)  # {"ok": True, "data": {"result": "olleH"}}
+    print(result)
 
 asyncio.run(main())
-```
+~~~
 
-</details>
+### HTTP — run an execution service
 
----
+~~~bash
+python -m pip install "flyto-core[api]"
+flyto serve
+~~~
 
-## API
+The local execution API runs on 127.0.0.1:8333 by default. Protect the service and configure authentication before exposing it beyond a trusted environment.
 
-Flyto2 Core exposes the same deterministic runtime through several supported interfaces rather than separate execution engines:
+## Why build on this?
 
-- **Python** — import the module registry and workflow engine directly.
-- **YAML workflows** — compose registered modules into replayable procedures.
-- **Execution API** — use the authenticated `/v1/*` HTTP routes for local integrations.
-- **MCP** — expose the registry through stdio or Streamable HTTP to AI clients.
-- **Module contract** — every executable action is defined by registry metadata and a bounded parameter schema; host-only primitives such as `capability.invoke` additionally require opaque runtime authority and cannot be activated by serialized workflow data alone.
+Most demos stop at “the AI said it did it.”
 
-Generated source-linked references are available in [Python API Reference](docs/reference/python-api.md), [Registered Modules](docs/reference/registered-modules.md), and the [Full Module Catalog](docs/TOOL_CATALOG.md).
+We care about the next step: **what actually ran, what changed, and what you can safely do next.** That's why trace, replay, bounded capabilities and evidence exist. They're not the headline; they're how we make the headline real.
 
----
+Flyto Core stays useful on its own. [Flyto2](https://flyto2.com) adds goal planning, AI Spaces and cross-device coordination around that execution layer.
 
-## Configuration
+**Build agents that do things. Then make those things real.**
 
-Flyto2 Core runs with safe defaults. Optional providers, browsers, verification services, and connectors are enabled explicitly through package extras and documented environment variables; secrets stay in runtime environment/credential stores rather than workflow YAML. Start from [`.env.example`](.env.example) for supported settings and see [Operations](docs/OPERATIONS.md) for runtime/deployment guidance.
+[Website](https://flyto2.com) · [Documentation](https://docs.flyto2.com) · [PyPI](https://pypi.org/project/flyto-core/) · [Issues](https://github.com/flytohub/flyto-core/issues) · [YouTube](https://www.youtube.com/@Flyto2)
 
-Host-injected runtime capabilities are deliberately different from configuration: a workflow cannot enable `capability.invoke` by setting an environment variable or serialized parameter. The trusted host must inject the execution-scoped opaque authority for that run.
+## Security and licensing
 
----
+Physical actions must be authorized by a trusted host and backed by the actual device's local safety controls. A ROS 2 adapter, external provider or workflow is not a substitute for emergency-stop hardware or site safety validation. No blanket certification or universal device compatibility is claimed.
 
-## 482 Modules, 89 Catalog Categories
+To report a vulnerability, use [GitHub Security Advisories](https://github.com/flytohub/flyto-core/security/advisories).
 
-| Category | Count | Examples |
-|----------|-------|----------|
-| `browser.*` | 54 | launch, goto, click, evaluate, screenshot, performance, challenge |
-| `flow.*` | 24 | switch, loop, branch, parallel, retry, circuit breaker, rate limit |
-| `array.*` | 15 | filter, sort, map, reduce, unique, chunk, flatten |
-| `api.*` | 13 | OpenAI, Anthropic, Gemini, Notion, Slack, Telegram |
-| `data.*` | 13 | JSON, YAML, CSV, XML parse/generate/convert |
-| `string.*` | 11 | reverse, uppercase, split, replace, trim, slugify, template |
-| `ai.*` | 10 | chat, model calls, vision, embeddings, moderation |
-| `object.*` | 10 | keys, values, merge, pick, omit, get, set, flatten |
-| `testing.*` | 10 | assertions, scenarios, E2E steps, reports |
-| `image.*` | 9 | resize, convert, crop, rotate, watermark, OCR, compress |
-| `verify.*` | 9 | evidence, visual diff, rulesets, annotations |
-| `file.*` | 8 | read, write, copy, move, delete, exists, edit, diff |
-| `stats.*` | 8 | mean, median, percentile, correlation, standard deviation |
-| `test.*` | 8 | API, browser, and visual checks |
-| `check.*` | 7 | validation and guard checks |
-| `crypto.*` | 7 | AES encrypt/decrypt, JWT create/verify, hashes |
-| `http.*` | 7 | get, request, batch, paginate, session |
-| `validate.*` | 7 | email, url, json, phone, credit card |
-| 66 more prefixes | 221 | Docker, archive, math, k8s, network, PDF, AWS, cache, git |
-
-See the **[Full Module Catalog](docs/TOOL_CATALOG.md)** for every module, parameter, and description.
-
----
-
-## Engine Features
-
-- **Execution Trace** — structured record of every step: input, output, timing, status
-- **Replay** — re-execute from any step with the original (or modified) context
-- **Breakpoints** — pause execution at any step, inspect state, resume
-- **Evidence Snapshots** — full state before and after each step boundary
-- **Data Lineage** — track data flow across steps, build dependency graphs
-- **Timeout Guard** — configurable workflow-level and per-step timeout protection
-
----
-
-## Architecture
-
-CLI, MCP, HTTP, Python, and packaged recipes converge on the same workflow
-engine, module registry, policy, trace, evidence, and replay boundaries. Start
-with the [Technical Whitepaper](docs/WHITEPAPER.md), then use the
-[Architecture Map](docs/architecture-map.md) and exhaustive
-[source reference](docs/reference/README.md) for implementation detail.
-
-The shared [product contract](flyto-product.toml), `flyto.product-contract.v1`,
-defines the Flyto2 promise: Turn AI work into verified, replayable procedures.
-
-| Package | Responsibility |
-|---|---|
-| `flyto-ai` | Understand, route, and govern new work and provider use. |
-| `flyto-blueprint` | Store, learn from, and score reusable procedures; it never executes them. |
-| `flyto-core` | Validate schemas, execute and replay deterministically, and emit evidence. |
-
-`flyto-core` is a standalone execution package; it does not require the other
-packages to execute a workflow or produce evidence.
-
----
-
-## Where to go next
-
-| You want to | Go to |
-|---|---|
-| Run one of the other built-in recipes | [docs/RECIPES.md](docs/RECIPES.md) |
-| Browse every module and parameter | [docs/TOOL_CATALOG.md](docs/TOOL_CATALOG.md) |
-| See the module categories at a glance | [482 Modules, 89 Catalog Categories](#482-modules-89-catalog-categories) |
-| Configure network, filesystem, auth, and permission switches | [docs/CONFIGURATION.md](docs/CONFIGURATION.md) |
-| Install a module pack or plugin | [docs/PLUGIN_SDK.md](docs/PLUGIN_SDK.md) |
-| Write your own module | [docs/MODULE_SPECIFICATION.md](docs/MODULE_SPECIFICATION.md) |
-| Understand why the engine is shaped this way | [docs/WHY.md](docs/WHY.md) |
-| Read the product boundary between the three packages | [ARCHITECTURE.md](ARCHITECTURE.md) |
-
-The canonical PyPI and MCP registry description is: The open-source execution engine for AI agents. 482 modules, MCP-native, triggers, queue, versioning, metering.
-
----
-
-## Contributing
-
-We welcome contributions! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for guidelines.
-
----
-
-## Testing
-
-```bash
-python -m pytest
-python -m ruff check .
-flyto recipe full-audit --url https://example.com
-```
-
----
-
-## Security
-
-Report security vulnerabilities via **[security@flyto2.com](mailto:security@flyto2.com)**.
-See **[SECURITY.md](https://github.com/flytohub/flyto-core/blob/main/SECURITY.md)**
-for the security policy and the environment variables that define the filesystem
-and outbound-network boundaries.
-
-**[SECURITY_STATUS.md](https://github.com/flytohub/flyto-core/blob/main/SECURITY_STATUS.md)**
-lists every published advisory with its severity, affected range, fixed-in
-version, and the regression test that covers it. Two boundaries are enforced
-registry-wide by tests that fail the build — every module taking a
-caller-supplied path must reach the filesystem sandbox helper, and every module
-taking a caller-supplied URL or host must reach an SSRF guard — so coverage is a
-CI property rather than a convention.
-
-[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/flytohub-flyto-core-badge.png)](https://mseep.ai/app/flytohub-flyto-core)
-[![Verified on MseeP](https://mseep.ai/badge.svg)](https://mseep.ai/app/9a708224-9666-46b6-8660-dad08fb16096)
-
----
-
-## License
-
-[Apache License 2.0](LICENSE) — free for personal and commercial use.
-
----
-
-**[Cloud Automation](https://flyto2.com/cloud/)** · **[Pricing](https://flyto2.com/pricing/)** · **[flyto2.com](https://flyto2.com)**
-
----
-
-## Hosted deployment
-
-A hosted deployment is available on [Frontier AI](https://fronteir.ai/mcp/flytohub-flyto-core).
-
----
-
-<sub>Also known as: open source AI agent framework for production workflows · Python AI workflow automation with Playwright · MCP server automation with trace and replay · browser automation that can resume from a failed step</sub>
+[Apache License 2.0](LICENSE) — free to use, modify and build on.
