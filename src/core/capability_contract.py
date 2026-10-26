@@ -95,8 +95,8 @@ ANGLE_OPS = ("angle_delta", "abs_angle_delta", "angle_to")
 
 #: Operators (2.38.0) that compare the last declared phase with an absolute
 #: target taken from the call's arguments, instead of a change between phases.
-#: "The robot ended at map (x, y)" or "the car ended on floor N" is an end
-#: state, which no relative measure can prove.
+#: "The resource ended at position (x, y)" or "it ended facing heading h" is
+#: an end state, which no relative measure can prove.
 ABSOLUTE_OPS = ("distance_to", "angle_to")
 
 # The bounded identifier grammar the registry already uses for capability ids

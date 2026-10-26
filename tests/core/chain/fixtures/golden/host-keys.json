@@ -1,0 +1,16 @@
+{
+  "issuer": "host:dev-golden",
+  "keys": [
+    {
+      "algorithm": "ed25519",
+      "key_id": "host-golden-1",
+      "not_after": null,
+      "not_before": null,
+      "public_key": "3+4nCsN5JstZvREY0FCidVp19rW7RFzTpDgptmSF8uc=",
+      "retained_heads": [],
+      "revoked_at": null
+    }
+  ],
+  "rotations": [],
+  "schema": "flyto.execution-chain-keys.v1"
+}

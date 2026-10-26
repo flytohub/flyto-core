@@ -1,0 +1,55 @@
+{
+  "head": "sha256:8f3d6e6cc1ce18f68bdf4a16274607fee77f7352ff768a98eb8d6a8c9b79c142",
+  "sections": [
+    {
+      "digest": "sha256:fd69996908668683c1fb55a4b7f1194e81d6513f74333e8fd6af70ad6db3ca4b",
+      "seq": 1,
+      "signing_message_sha256": "9195383dbb9c3d4d7cf5d72e3eb7f0ea516a50e0706d2808220a4da8eaff7140"
+    },
+    {
+      "digest": "sha256:a6b3a941c09fc21186fb8992105d3e1d97ca77175790acb707febc83d73b9e15",
+      "seq": 2,
+      "signing_message_sha256": "7fb3148c2b044f90d94f707ad372fca068e49b0197f1e8e662c5e97db20781ed"
+    },
+    {
+      "digest": "sha256:e47b76ed2201537f343175edce83ba07006ce9f1e7d2f5957b71b16a5a1dbaa0",
+      "seq": 3,
+      "signing_message_sha256": "98b779b3ca4f35f47330dd02ecffa95d866e7783684d783dcf27fed7dd58d818"
+    },
+    {
+      "digest": "sha256:5027b1fb3a55719e39ef6e9ebaab261387d926aa8e1fed6ccb8cc225519ca1b6",
+      "seq": 4,
+      "signing_message_sha256": "211217e7462ef0258760fcc278b41190a67b0d830e8f9fad73b53601aa5e0294"
+    },
+    {
+      "digest": "sha256:f32db2f16b92dfcb45e303550933a5c2acea896fe4a2fc73eb13bdcd117b912b",
+      "seq": 5,
+      "signing_message_sha256": "98d09598384143affa2c359c57a49ceb63b5cb43a0f09cef61ac5f862071eed7"
+    },
+    {
+      "digest": "sha256:66c35c2cbf485aa78238c25b5787478a0084a6ab688043f2930b817ed13c07d7",
+      "seq": 6,
+      "signing_message_sha256": "c7d90e8a5ab41e25c859b1b7e7e1638c22bd7811bf3572540f6596e45e2e25b3"
+    },
+    {
+      "digest": "sha256:f904cac8101c7f9690064c4c5a4d13176fbb9767e682546e9380db43e3ae330f",
+      "seq": 7,
+      "signing_message_sha256": "99332e7468357ee6d90d78f676f2e1da6cec7c67657cfdfe34335a7a2ef29c81"
+    },
+    {
+      "digest": "sha256:98d4c7c23c2dec94347d2cc615af5953f3f79469f18cc70ce0248211a500e914",
+      "seq": 8,
+      "signing_message_sha256": "a2f463ab6c31406e997f638ed372735e2e391c9927f351a8f972105a41a1f5c0"
+    },
+    {
+      "digest": "sha256:5bae48558dff85da795a5362319d3cd8e345b5de9ef7b45e0cf2ae1a1befc93a",
+      "seq": 9,
+      "signing_message_sha256": "f6f76c2111be9f1316174ba57bb70f57a98d8f45eba7a3ea51cd76e7b7f40b16"
+    },
+    {
+      "digest": "sha256:8f3d6e6cc1ce18f68bdf4a16274607fee77f7352ff768a98eb8d6a8c9b79c142",
+      "seq": 10,
+      "signing_message_sha256": "29ed4013438b80b9670b8bc3eb0d32bd53d0690d87e315bbeccd2e30cec50f89"
+    }
+  ]
+}

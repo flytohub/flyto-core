@@ -53,10 +53,12 @@ import sys
 import threading
 import time
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from importlib.metadata import entry_points
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Tuple
 
+from ..adapter_status import FAULT_KEY, STATUS_METHODS, fault_payload, raised_fault, status_payload
 from ..capability_contract import PHASES, judge
 
 logger = logging.getLogger(__name__)
@@ -342,6 +344,9 @@ class CapabilityHost:
         # One commanded resource, one call at a time. stop_now() never takes it.
         self._call_lock = threading.Lock()
         self._records: List[Dict[str, Any]] = []
+        # A fault an adapter call raised (``core.adapter_status``), held until the
+        # adapter's own status answers ``fault: None``.
+        self._fault: Optional[Dict[str, str]] = None
 
     # -- injection --------------------------------------------------------
 
@@ -644,11 +649,19 @@ class CapabilityHost:
                 box["result"] = _outcome_of(adapter.invoke(request))
             except Exception as error:  # noqa: BLE001 - an adapter crash is a failed call
                 box["result"] = (OUTCOME_FAILED, f"adapter raised {type(error).__name__}", {})
+                fault = raised_fault(error, at=datetime.now(timezone.utc).isoformat())
+                if fault is not None:
+                    box["fault"] = fault_payload(fault)
 
         worker = threading.Thread(target=run, name=f"capability-call-{request.call_id}", daemon=True)
         worker.start()
         worker.join(request.deadline_seconds + self._deadline_grace)
         if "result" in box:
+            if "fault" in box:
+                # The adapter said the resource is faulted: recorded, and held for its status.
+                record[FAULT_KEY] = box["fault"]
+                with self._lock:
+                    self._fault = box["fault"]
             return box["result"]
         record["host_watchdog"] = True
         return (
@@ -661,6 +674,37 @@ class CapabilityHost:
     async def invoke(self, request: Mapping[str, Any]) -> Dict[str, Any]:
         """Dispatch one ``{resource_id, capability_id, arguments}`` request."""
         return await asyncio.to_thread(self._invoke_sync, dict(request))
+
+    # -- status -----------------------------------------------------------
+
+    def connection_status(self) -> Optional[Dict[str, Any]]:
+        """The adapter's status (``core.adapter_status``), with any fault a call raised.
+
+        None when the adapter has no status surface and no call raised a
+        fault: an adapter that reports nothing stays valid and says nothing.
+        The adapter's own ``fault`` answer wins; ``fault: None`` clears a
+        latched fault.
+        """
+        adapter = self._build_adapter()
+        method = next((getattr(adapter, name, None) for name in STATUS_METHODS
+                       if callable(getattr(adapter, name, None))), None)
+        with self._lock:
+            latched = self._fault
+        if method is None:
+            return {FAULT_KEY: latched} if latched is not None else None
+        try:
+            raw = method()
+        except Exception as error:  # noqa: BLE001 - reported, not passed off as no report
+            found: Dict[str, Any] = {"status_error": type(error).__name__}
+        else:
+            found = status_payload(raw) if isinstance(raw, Mapping) else {}
+        if FAULT_KEY in found:
+            if found[FAULT_KEY] is None:
+                with self._lock:
+                    self._fault = None
+        elif latched is not None:
+            found[FAULT_KEY] = latched
+        return found
 
     # -- stop and close ---------------------------------------------------
 
