@@ -37,6 +37,10 @@ import argparse  # noqa: E402 - bootstrap standalone source imports first
 
 import yaml  # noqa: E402 - bootstrap standalone source imports first
 
+from .chain import (  # noqa: E402 - bootstrap standalone source imports first
+    add_chain_parser,
+    run_chain_command,
+)
 from .config import Colors  # noqa: E402 - bootstrap standalone source imports first
 from .i18n import I18n  # noqa: E402 - bootstrap standalone source imports first
 from .modules import (  # noqa: E402 - bootstrap standalone source imports first
@@ -169,6 +173,9 @@ Examples:
   flyto plugin install slack
   flyto plugin list
 
+  # Verify an execution chain record offline
+  flyto chain verify record.json --keys keys.json
+
   # Template management
   flyto template list
   flyto template export <template-id> -o template.yaml
@@ -193,6 +200,7 @@ Examples:
     add_plugin_parser(subparsers)
     add_pack_parser(subparsers)
     add_bundle_parser(subparsers)
+    add_chain_parser(subparsers)
     add_serve_parser(subparsers)
     add_template_parser(subparsers)
 
@@ -239,7 +247,7 @@ Examples:
     # Legacy mode: rewrite `flyto workflow.yaml` → `flyto run workflow.yaml`
     # so argparse routes it through the run subparser correctly.
     if len(sys.argv) > 1 and sys.argv[1] not in (
-        'run', 'modules', 'plugin', 'pack', 'bundle', 'serve', 'template',
+        'run', 'modules', 'plugin', 'pack', 'bundle', 'chain', 'serve', 'template',
         'recipes', 'recipe', 'replay', 'learn', '-h', '--help'
     ) and (sys.argv[1].endswith('.yaml') or sys.argv[1].endswith('.yml')):
         sys.argv.insert(1, 'run')
@@ -268,6 +276,10 @@ Examples:
     # Handle 'pack' command
     if args.command == 'pack':
         sys.exit(run_pack_command(args))
+
+    # Handle 'chain' command
+    if args.command == 'chain':
+        sys.exit(run_chain_command(args))
 
     # Handle 'bundle' command
     if args.command == 'bundle':

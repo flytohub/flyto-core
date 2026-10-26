@@ -1,0 +1,231 @@
+{
+  "call_id": "c_job-golden-1",
+  "head": "sha256:8f3d6e6cc1ce18f68bdf4a16274607fee77f7352ff768a98eb8d6a8c9b79c142",
+  "schema": "flyto.execution-chain.v1",
+  "sections": [
+    {
+      "at": "2026-10-26T08:00:00+00:00",
+      "body": {
+        "entry_path": "W1",
+        "params_digest": "sha256:33d6854b5fb5a612fd145e03941a4ce60b59c271b55fbec87dff543ecd0b490f",
+        "principal": "user:golden"
+      },
+      "call_id": "c_job-golden-1",
+      "prev": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "schema": "flyto.execution-chain.v1",
+      "seq": 1,
+      "signature": {
+        "algorithm": "ed25519",
+        "key_id": "cloud-golden-2",
+        "signature": "voo85F97WUurz8an66/lFf9toZlAR5xl2Stoa1bnv9KGnxdhlimWk+IOSEEK4JtEgR5anEBX5tHm6BYiTZpmCQ=="
+      },
+      "signer": "cloud",
+      "stage": "admit"
+    },
+    {
+      "at": "2026-10-26T08:00:01+00:00",
+      "body": {
+        "contracts": {
+          "example.resource.move_to": "sha256:ac66deb341860ba7116a041641b4d865a5d20af21f58ee474bc9eb8530e3c12b"
+        },
+        "max_level": 4
+      },
+      "call_id": "c_job-golden-1",
+      "prev": "sha256:fd69996908668683c1fb55a4b7f1194e81d6513f74333e8fd6af70ad6db3ca4b",
+      "schema": "flyto.execution-chain.v1",
+      "seq": 2,
+      "signature": {
+        "algorithm": "ed25519",
+        "key_id": "cloud-golden-2",
+        "signature": "eRlf0BQg8KE1bLCwlU0JQvxTpRCLyKSRh5MxfBEkDznv95Znncwxt89IVqQCsKVf6/LrP9TR7jcf1vja+vTBCw=="
+      },
+      "signer": "cloud",
+      "stage": "contract"
+    },
+    {
+      "at": "2026-10-26T08:00:02+00:00",
+      "body": {
+        "effective_max_level": 4,
+        "grant_ids": [
+          "g-1"
+        ]
+      },
+      "call_id": "c_job-golden-1",
+      "prev": "sha256:a6b3a941c09fc21186fb8992105d3e1d97ca77175790acb707febc83d73b9e15",
+      "schema": "flyto.execution-chain.v1",
+      "seq": 3,
+      "signature": {
+        "algorithm": "ed25519",
+        "key_id": "cloud-golden-2",
+        "signature": "bPfBAGX53g5sCw2h09YOeiN3vxNNnZRq26X0Xu02Wq0fCTHiTg1pnnnoMmGj8TthgvIXTrz2jgDNsEq9xLt/BQ=="
+      },
+      "signer": "cloud",
+      "stage": "authority"
+    },
+    {
+      "at": "2026-10-26T08:00:03+00:00",
+      "body": {
+        "approver": "user:golden",
+        "kind": "operator_start"
+      },
+      "call_id": "c_job-golden-1",
+      "prev": "sha256:e47b76ed2201537f343175edce83ba07006ce9f1e7d2f5957b71b16a5a1dbaa0",
+      "schema": "flyto.execution-chain.v1",
+      "seq": 4,
+      "signature": {
+        "algorithm": "ed25519",
+        "key_id": "cloud-golden-2",
+        "signature": "CS3/DkQkaZNe+6B4f4TNl/VVeJ6tqGVCJYOK2zNE6O1AGa3HJqHHDP8tonRxZ6roNegN3dexVX7RF1lXB5NiBw=="
+      },
+      "signer": "cloud",
+      "stage": "approval"
+    },
+    {
+      "at": "2026-10-26T08:00:04+00:00",
+      "body": {
+        "generation": 3,
+        "resource_id": "res-1"
+      },
+      "call_id": "c_job-golden-1",
+      "prev": "sha256:5027b1fb3a55719e39ef6e9ebaab261387d926aa8e1fed6ccb8cc225519ca1b6",
+      "schema": "flyto.execution-chain.v1",
+      "seq": 5,
+      "signature": {
+        "algorithm": "ed25519",
+        "key_id": "cloud-golden-2",
+        "signature": "2YcZwF3l0Ti3uCvI95bBi5c6E3F30BmleyD+p2FyM/+afN87dH+akqa0oqq5TTut1eAHsE3C5rWEOtwrhoFCCA=="
+      },
+      "signer": "cloud",
+      "stage": "lease"
+    },
+    {
+      "at": "2026-10-26T08:00:05+00:00",
+      "body": {
+        "envelope_digest": "sha256:264abde5051ab2841336f730c1a0ab9e0f781d76072b7de2cae1dd2c3828b39c",
+        "expires_at": "2026-10-26T09:00:05+00:00",
+        "job_id": "job-golden-1",
+        "target_host": "dev-golden"
+      },
+      "call_id": "c_job-golden-1",
+      "prev": "sha256:f32db2f16b92dfcb45e303550933a5c2acea896fe4a2fc73eb13bdcd117b912b",
+      "schema": "flyto.execution-chain.v1",
+      "seq": 6,
+      "signature": {
+        "algorithm": "ed25519",
+        "key_id": "cloud-golden-2",
+        "signature": "iBeDJblWZsBBZ/ElWNIrQGH7f6y1twuUzjLBzQU622ziNCZXBdIE9WId8vUTvMapUOMCL2irzpok1/gTTBzcBg=="
+      },
+      "signer": "cloud",
+      "stage": "dispatch"
+    },
+    {
+      "at": "2026-10-26T08:00:06+00:00",
+      "body": {
+        "cloud_record_head": "sha256:66c35c2cbf485aa78238c25b5787478a0084a6ab688043f2930b817ed13c07d7",
+        "device_key_id": "host-golden-1",
+        "host_id": "dev-golden",
+        "host_seq": 1,
+        "host_verified": true,
+        "refusal": null,
+        "stop_exempt": false
+      },
+      "call_id": "c_job-golden-1",
+      "prev": "sha256:66c35c2cbf485aa78238c25b5787478a0084a6ab688043f2930b817ed13c07d7",
+      "schema": "flyto.execution-chain.v1",
+      "seq": 7,
+      "signature": {
+        "algorithm": "ed25519",
+        "key_id": "host-golden-1",
+        "signature": "cK0fJRxokvHNtVmHVzsvyuEKeOVl4FMpeMnSXxHKGcu9U8ts4t04dpXD4fSOdVjvvaEDkEG9n6PWu0Br2xBSBA=="
+      },
+      "signer": "host:dev-golden",
+      "stage": "host_claim"
+    },
+    {
+      "at": "2026-10-26T08:00:09+00:00",
+      "body": {
+        "calls": [
+          {
+            "call_id": "cap-1",
+            "capability_id": "example.resource.move_to",
+            "effect_seq": 3,
+            "local_contract_digest": "sha256:ac66deb341860ba7116a041641b4d865a5d20af21f58ee474bc9eb8530e3c12b",
+            "outcome": "completed"
+          }
+        ],
+        "host_seq": 5
+      },
+      "call_id": "c_job-golden-1",
+      "prev": "sha256:f904cac8101c7f9690064c4c5a4d13176fbb9767e682546e9380db43e3ae330f",
+      "schema": "flyto.execution-chain.v1",
+      "seq": 8,
+      "signature": {
+        "algorithm": "ed25519",
+        "key_id": "host-golden-1",
+        "signature": "kxZGki5o5LEpjbgBHUwfhJHYijROpAVbh2Z4B5L+ypbQn2m8LQiPsAsAesRtCwQlgCIfB73tsOBtxj2AJW0dBA=="
+      },
+      "signer": "host:dev-golden",
+      "stage": "host_execute"
+    },
+    {
+      "at": "2026-10-26T08:00:10+00:00",
+      "body": {
+        "captures": [
+          {
+            "call_id": "cap-1",
+            "capture_seq": 2,
+            "kind": "before",
+            "sha256": "sha256:010f48523b8a9f1fb0f56721e6177fdbfcfc7bbd4e117ad2180d1c73f8c9d113"
+          },
+          {
+            "call_id": "cap-1",
+            "capture_seq": 4,
+            "kind": "after",
+            "sha256": "sha256:4835f96cb95414c1b3dd5816bcabc7ae1405283accdbdf990de0f35f07075abb"
+          }
+        ],
+        "host_seq": 6,
+        "ordering_proof": [
+          {
+            "after": 4,
+            "before": 2,
+            "call_id": "cap-1",
+            "effect": 3,
+            "ordered": true
+          }
+        ]
+      },
+      "call_id": "c_job-golden-1",
+      "prev": "sha256:98d4c7c23c2dec94347d2cc615af5953f3f79469f18cc70ce0248211a500e914",
+      "schema": "flyto.execution-chain.v1",
+      "seq": 9,
+      "signature": {
+        "algorithm": "ed25519",
+        "key_id": "host-golden-1",
+        "signature": "LgGh/67zTI8Jaot6lK0DtvUMdI1F2T9jc2L9ftOr+SxmOmlgMWqqm2UoPdwo4LAVFX09oZoNHltiHO4m6RsHBw=="
+      },
+      "signer": "host:dev-golden",
+      "stage": "evidence"
+    },
+    {
+      "at": "2026-10-26T08:00:11+00:00",
+      "body": {
+        "code": null,
+        "effect": "confirmed",
+        "proof": "supported",
+        "state": "done"
+      },
+      "call_id": "c_job-golden-1",
+      "prev": "sha256:5bae48558dff85da795a5362319d3cd8e345b5de9ef7b45e0cf2ae1a1befc93a",
+      "schema": "flyto.execution-chain.v1",
+      "seq": 10,
+      "signature": {
+        "algorithm": "ed25519",
+        "key_id": "cloud-golden-2",
+        "signature": "4c7YpFPLMwheK8IvljYyVoIi2AkohET8N2ITZkxLTUhq2ixz25QaVDgq2yiNlZtcmMv7bpiKEZZNVmCOTdbrAA=="
+      },
+      "signer": "cloud",
+      "stage": "verdict"
+    }
+  ]
+}

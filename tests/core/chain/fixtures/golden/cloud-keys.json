@@ -1,0 +1,33 @@
+{
+  "issuer": "cloud",
+  "keys": [
+    {
+      "algorithm": "ed25519",
+      "key_id": "cloud-golden-1",
+      "not_after": "2026-10-01T00:00:00+00:00",
+      "not_before": null,
+      "public_key": "sejtgKsYqFM2PehA3j1gOVIqr1n3AV9R6HY4jupvJeM=",
+      "retained_heads": [],
+      "revoked_at": null
+    },
+    {
+      "algorithm": "ed25519",
+      "key_id": "cloud-golden-2",
+      "not_after": null,
+      "not_before": "2026-10-01T00:00:00+00:00",
+      "public_key": "r9IsKZlEX+Ulr4vGQ1zt5BTAo5TjLVSL2esYeAdql1M=",
+      "retained_heads": [],
+      "revoked_at": null
+    }
+  ],
+  "rotations": [
+    {
+      "at": "2026-10-01T00:00:00+00:00",
+      "from_key_id": "cloud-golden-1",
+      "signature": "rttFKK9qiYHDXoRu847YeuFpjGJdVRhNgNjNzy//kF/PBPhm2Hb2vK8VPFALx/mPhy90V2j4kqORM9J2VHsWDg==",
+      "to_key_id": "cloud-golden-2",
+      "to_public_key": "r9IsKZlEX+Ulr4vGQ1zt5BTAo5TjLVSL2esYeAdql1M="
+    }
+  ],
+  "schema": "flyto.execution-chain-keys.v1"
+}
