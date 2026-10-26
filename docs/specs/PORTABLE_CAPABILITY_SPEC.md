@@ -135,6 +135,26 @@ Declaring a capability does not get it trusted. A conforming host:
 5. **Judges the evidence itself** from the observations the adapter reports.
    It does not take the runner's word that the call succeeded.
 
+## Reporting a fault
+
+An adapter may offer `connection_status()` (or `transport_status()` on the
+transport that discovered the resource). Both are optional, and an adapter
+without them stays valid. `core.adapter_status.status_payload` reads the
+answer field by field. Its optional `fault` field says whether the resource
+can work now:
+
+| `fault` | Meaning |
+| --- | --- |
+| `{"reason": "<code>", "since": "<ISO 8601 with offset>"}` | faulted since then, for the adapter's own reason code |
+| `null` | the adapter checked, and there is no fault |
+| absent | unknown, which is what every adapter written before this field reports |
+| present but unreadable | a fault, with reason `fault_report_unreadable` |
+
+A call may also raise an exception that has a `fault_code` attribute.
+`core.adapter_status.AdapterFaultError` is a ready-made one. The host records the
+call as failed and records the fault, and `CapabilityHost.connection_status()`
+keeps reporting it until the adapter answers `fault: null`.
+
 ## Relation to W3C WoT Thing Description 1.1
 
 A Thing Description describes how to interact with a thing: its properties,
