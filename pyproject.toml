@@ -59,7 +59,7 @@ requires-python = ">=3.10"
 
 dependencies = [
     "pyyaml>=6.0.3,<7",
-    "aiohttp>=3.14.3,<4",
+    "aiohttp>=3.14.4,<4",  # CVE-2026-111748 fixed in 3.14.4
     "beautifulsoup4>=4.15.0,<5",
     "lxml>=6.1.1,<7",
     "pydantic>=2.13.5,<3",
@@ -91,13 +91,11 @@ vector = [
 ]
 image = [
     "qrcode[pil]>=8.2,<9",
-    # GHSA-3f63 (ACE, 10.2.0) + GHSA-44wm (buffer overflow, 10.3.0) fixed.
-    # The 11.3.0 floor was chosen only because it was the last line supporting
-    # py3.9; with the 3.10 floor that reason is gone and >= 12.2.0 is now
-    # reachable. Left at 11.3.0 deliberately in this change: moving the major
-    # is an image-module change that needs the image suite run against it, not
-    # a packaging edit.
-    "Pillow>=11.3.0,<13",
+    # 13.0.0 fixes the advisories open against 12.3.0 (GHSA-78g4-xqwv-q3g8
+    # among them) and needs Python 3.11; the image suite passes on it. Python
+    # 3.10 keeps the 12 line, the newest it can install.
+    "Pillow>=13.0.0,<14; python_version >= '3.11'",
+    "Pillow>=11.3.0,<13; python_version < '3.11'",
 ]
 crypto = [
     "cryptography>=48.0.1,<49",
