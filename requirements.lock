@@ -2,7 +2,7 @@ aiofiles==24.1.0
     # via flyto-core (pyproject.toml)
 aiohappyeyeballs==2.7.1
     # via aiohttp
-aiohttp==3.14.3
+aiohttp==3.14.5
     # via flyto-core (pyproject.toml)
 aiosignal==1.4.0
     # via aiohttp
@@ -50,5 +50,5 @@ typing-extensions==4.16.0
     #   typing-inspection
 typing-inspection==0.4.4
     # via pydantic
-yarl==1.24.5
+yarl==1.25.1
     # via aiohttp
