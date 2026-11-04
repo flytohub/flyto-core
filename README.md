@@ -12,12 +12,6 @@
 
 <!-- mcp-name: io.github.flytohub/flyto-core -->
 
-## See Flyto2 on real hardware
-
-https://github.com/user-attachments/assets/096028c2-1fb7-43fe-a0c3-df4170e7a73a
-
-Want to see the real thing? Here’s Flyto2 with a TurtleBot3 and a robot arm in the lab. It’s a demo, not a production sign-off.
-
 ## Try something.
 
 Say you want to check a website, grab screenshots, collect some data, and save a report.
