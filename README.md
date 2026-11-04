@@ -9,11 +9,6 @@
   <a href="README.md">English</a> · <a href="README.ja.md">日本語</a> · <a href="README.ko.md">한국어</a> · <a href="README.zh-CN.md">简体中文</a> · <a href="README.es.md">Español</a> · <a href="README.pt-BR.md">Português (BR)</a>
 </p>
 
-<p align="center">
-  <a href="https://pypi.org/project/flyto-core/"><img src="https://img.shields.io/pypi/v/flyto-core" alt="PyPI" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="Apache-2.0" /></a>
-  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10%2B-3776AB" alt="Python 3.10+" /></a>
-</p>
 
 <!-- mcp-name: io.github.flytohub/flyto-core -->
 
