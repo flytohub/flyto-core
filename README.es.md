@@ -8,7 +8,7 @@ También abre sitios web, llama APIs, trabaja con archivos y ejecuta los pasos q
 
 ## Mira Flyto2 con robots de verdad
 
-<p align="center"><a href="https://github.com/flytohub/flyto-robotics/releases/download/demo-amr-arm-20261104/ai-amr-arm-2026-11.mp4"><img src="https://raw.githubusercontent.com/flytohub/flyto-robotics/main/docs/assets/amr-arm-demo.jpg" width="760" alt="Ver la demo de Flyto2 con AMR y brazo robótico" /></a></p>
+https://github.com/user-attachments/assets/096028c2-1fb7-43fe-a0c3-df4170e7a73a
 
 ¿Quieres verlo en acción? Aquí tienes a Flyto2 con un TurtleBot3 y un brazo robótico en el laboratorio. Es una demo, no una validación para producción.
 
