@@ -8,7 +8,7 @@
 
 ## 실제 로봇이 움직이는 모습
 
-<p align="center"><a href="https://github.com/flytohub/flyto-robotics/releases/download/demo-amr-arm-20261104/ai-amr-arm-2026-11.mp4"><img src="https://raw.githubusercontent.com/flytohub/flyto-robotics/main/docs/assets/amr-arm-demo.jpg" width="760" alt="Flyto2 AMR 및 로봇 팔 데모 보기" /></a></p>
+https://github.com/user-attachments/assets/096028c2-1fb7-43fe-a0c3-df4170e7a73a
 
 직접 보고 싶나요? 실험실에서 Flyto2와 TurtleBot3, 로봇 팔을 함께 구동한 영상이에요. 실제 운영 환경까지 검증됐다는 뜻은 아니에요.
 
