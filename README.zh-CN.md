@@ -6,6 +6,12 @@
 
 当然，也能操作网站、调用 API、处理文件，把中间那些步骤串起来执行。
 
+## 看看 Flyto2 怎么控制真机
+
+<p align="center"><a href="https://github.com/flytohub/flyto-robotics/releases/download/demo-amr-arm-20261104/ai-amr-arm-2026-11.mp4"><img src="https://raw.githubusercontent.com/flytohub/flyto-robotics/main/docs/assets/amr-arm-demo.jpg" width="760" alt="观看 Flyto2 AMR 与机械臂演示" /></a></p>
+
+想看真机跑起来？这段视频展示了 Flyto2 在实验室操作 TurtleBot3 和机械臂。这是演示，不代表已经通过生产级验收。
+
 ## 先跑一个看看
 
 比如你想检查一个网页，抓点数据、截几张图，顺便生成报告：

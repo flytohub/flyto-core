@@ -6,6 +6,12 @@
 
 웹사이트도 열고, API도 호출하고, 파일도 다룹니다. 그 사이에 필요한 작업까지 한 번에 실행하는 소프트웨어가 Flyto2예요.
 
+## 실제 로봇이 움직이는 모습
+
+<p align="center"><a href="https://github.com/flytohub/flyto-robotics/releases/download/demo-amr-arm-20261104/ai-amr-arm-2026-11.mp4"><img src="https://raw.githubusercontent.com/flytohub/flyto-robotics/main/docs/assets/amr-arm-demo.jpg" width="760" alt="Flyto2 AMR 및 로봇 팔 데모 보기" /></a></p>
+
+직접 보고 싶나요? 실험실에서 Flyto2와 TurtleBot3, 로봇 팔을 함께 구동한 영상이에요. 실제 운영 환경까지 검증됐다는 뜻은 아니에요.
+
 ## 일단 하나 실행해 볼까요?
 
 웹페이지를 확인하고, 데이터와 스크린샷을 모으고, 보고서까지 저장하려면:

@@ -6,6 +6,12 @@
 
 もちろんWebサイトの操作、APIの呼び出し、ファイル処理も。必要なステップをまとめて実行するのがFlyto2です。
 
+## 実機で動く Flyto2 を見てみよう
+
+<p align="center"><a href="https://github.com/flytohub/flyto-robotics/releases/download/demo-amr-arm-20261104/ai-amr-arm-2026-11.mp4"><img src="https://raw.githubusercontent.com/flytohub/flyto-robotics/main/docs/assets/amr-arm-demo.jpg" width="760" alt="Flyto2 の AMR とロボットアームの実機デモを見る" /></a></p>
+
+実際に動くところが見たい？ TurtleBot3 とロボットアームを使ったラボでのデモです。製品環境での動作保証を示すものではありません。
+
 ## とりあえず動かしてみよう
 
 たとえばページを調べて、データとスクリーンショットを集めて、レポートを保存したいなら：

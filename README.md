@@ -17,6 +17,12 @@
 
 <!-- mcp-name: io.github.flytohub/flyto-core -->
 
+## See Flyto2 on real hardware
+
+<p align="center"><a href="https://github.com/flytohub/flyto-robotics/releases/download/demo-amr-arm-20261104/ai-amr-arm-2026-11.mp4"><img src="https://raw.githubusercontent.com/flytohub/flyto-robotics/main/docs/assets/amr-arm-demo.jpg" width="760" alt="Watch the Flyto2 AMR and robot arm demo" /></a></p>
+
+Want to see the real thing? Here’s Flyto2 with a TurtleBot3 and a robot arm in the lab. It’s a demo, not a production sign-off.
+
 ## Try something.
 
 Say you want to check a website, grab screenshots, collect some data, and save a report.
