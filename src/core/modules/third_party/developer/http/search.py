@@ -128,6 +128,22 @@ def _search_not_sent(*, service: str, missing: str) -> Dict[str, Any]:
     )
 
 
+_GOOGLE_DISCONTINUATION_NOTICE = (
+    "Google's Custom Search JSON API is closed to new customers and is "
+    f"discontinued on {APIEndpoints.GOOGLE_SEARCH_DISCONTINUED_ON}. New Google "
+    "Cloud projects get 403 PERMISSION_DENIED."
+)
+
+
+def _google_search_url() -> str:
+    """The Custom Search endpoint: the operator's compatible one, else Google's.
+
+    Read from the environment only -- never from step params -- so the API key
+    (also from the environment) is only ever sent where the operator pointed it.
+    """
+    return (os.getenv(EnvVars.GOOGLE_SEARCH_URL) or '').strip() or APIEndpoints.GOOGLE_SEARCH_URL
+
+
 def _google_search_setup_error():
     return {
         "status": "error",
@@ -136,14 +152,17 @@ def _google_search_setup_error():
             f"{EnvVars.GOOGLE_SEARCH_ENGINE_ID} environment variables"
         ),
         "setup_guide": {
-            "step1": "Go to https://console.cloud.google.com/apis/credentials",
-            "step2": "Create API Key",
-            "step3": "Enable Custom Search API",
-            "step4": "Go to https://programmablesearchengine.google.com/",
-            "step5": "Create search engine and get Search Engine ID",
-            "step6": (
-                f"Set environment variables: {EnvVars.GOOGLE_API_KEY} and "
+            "notice": _GOOGLE_DISCONTINUATION_NOTICE,
+            "step1": (
+                f"Existing Google keys: set {EnvVars.GOOGLE_API_KEY} and "
                 f"{EnvVars.GOOGLE_SEARCH_ENGINE_ID}"
+            ),
+            "step2": (
+                f"Compatible provider: also set {EnvVars.GOOGLE_SEARCH_URL} to its "
+                "customsearch/v1 endpoint and use its key and engine ID"
+            ),
+            "step3": (
+                "Or switch to core.api.serpapi_search or core.api.tavily_search"
             ),
         },
         "outcome": _search_not_sent(
@@ -165,7 +184,10 @@ def _parse_search_results(items):
     tags=['api', 'search', 'google', 'official', 'ssrf_protected'],
     label='Google Search (API)',
     label_key='modules.api.google_search.label',
-    description='Use Google Custom Search API to search keywords',
+    description=(
+        'Use the Google Custom Search JSON API (or a compatible endpoint set in '
+        'GOOGLE_SEARCH_URL) to search keywords. Google discontinues the API on 2027-01-01'
+    ),
     description_key='modules.api.google_search.description',
     icon='Search',
     color='#4285F4',
@@ -235,11 +257,18 @@ class GoogleSearchAPIModule(BaseModule):
         timeout = aiohttp.ClientTimeout(total=30)
         async with (
             aiohttp.ClientSession(timeout=timeout) as session,
-            session.get(APIEndpoints.GOOGLE_SEARCH_URL, params=params) as response,
+            session.get(_google_search_url(), params=params) as response,
         ):
             if response.status != 200:
-                error_data = await response.json()
+                try:
+                    error_data = await response.json()
+                except (aiohttp.ContentTypeError, ValueError):
+                    error_data = {}
+                if not isinstance(error_data, dict):
+                    error_data = {}
                 message = f"API error: {error_data.get('error', {}).get('message', 'Unknown error')}"
+                if response.status == 403 and not os.getenv(EnvVars.GOOGLE_SEARCH_URL):
+                    message = f"{message}. {_GOOGLE_DISCONTINUATION_NOTICE}"
                 return {
                     "status": "error",
                     "message": message,
