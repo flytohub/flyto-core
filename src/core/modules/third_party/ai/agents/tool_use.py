@@ -26,6 +26,13 @@ chooses. Two return paths carry a payload:
       not one. Tools that already ran may have left work half-done, and nothing
       in this module can say which, which is the definition of indeterminate.
 
+  the provider cut the reply off                 INDETERMINATE
+      The provider's stop reason says the reply did not finish (`max_tokens`,
+      `model_context_window_exceeded`, `refusal`, `pause_turn` on Anthropic;
+      `length`, `content_filter` on OpenAI). The text so far is returned and
+      any tool call in that reply is NOT run: a cut-off tool call carries a
+      partial argument set, and running it would write half a file.
+
 Every other exit raises -- no prompt, no tools, no API key, an unsupported
 provider, a non-200 from either API, an `aiohttp.ClientError`. An exception
 carries no envelope anywhere in this engine, so those paths are a real and
@@ -53,10 +60,10 @@ from typing import Any, Dict, List
 import aiohttp
 
 from .....engine.outcome import ClaimBy, Outcome, envelope
-from ....atomic.llm._tools import execute_tool, build_tool_definitions
+from ....atomic.llm._tools import execute_tool
+from ....errors import ModuleError, ValidationError
 from ....registry import register_module
 from ....schema import compose, field
-from ....errors import ValidationError, ModuleError
 
 logger = logging.getLogger(__name__)
 
@@ -171,6 +178,85 @@ def _agent_cut_off(
     )
 
 
+# Which provider stop reasons mean "the reply is complete". Anything else --
+# including a reason this table has never seen -- is treated as cut off, so a
+# new provider value cannot silently promote a partial reply to ACCEPTED.
+_COMPLETE_STOP_REASONS: Dict[str, frozenset] = {
+    'anthropic': frozenset({'end_turn', 'tool_use', 'stop_sequence'}),
+    'openai': frozenset({'stop', 'tool_calls', 'function_call'}),
+}
+
+DEFAULT_MAX_TOKENS = 4096
+
+
+def _reply_is_complete(provider: str, stop_reason: Any) -> bool:
+    return stop_reason in _COMPLETE_STOP_REASONS.get(provider, frozenset())
+
+
+def _agent_reply_cut_off(
+    *,
+    provider: str,
+    model: str,
+    iterations: int,
+    stop_reason: Any,
+    skipped_tool_calls: int,
+    tally: _ToolTally,
+) -> Dict[str, Any]:
+    """INDETERMINATE: the provider said its own reply did not finish (#152).
+
+    ACCEPTED would claim the model answered; it was stopped mid-reply. The
+    tool calls in the cut-off reply were not run, and the tally shows what
+    earlier iterations already did.
+    """
+    return envelope(
+        Outcome.INDETERMINATE,
+        claim_by=ClaimBy.NONE,
+        effects=[
+            {
+                'kind': 'agent_reply_cut_off',
+                'provider': provider,
+                'model': model,
+                'iterations': iterations,
+                'stop_reason': stop_reason,
+                'skipped_tool_calls': skipped_tool_calls,
+                'measured_by': "the provider's own stop reason",
+                'detail': (
+                    'The provider marked the reply as incomplete. The text is '
+                    'what arrived before the cut, and any tool call in the '
+                    'reply was not executed because its arguments may be '
+                    'partial. Raise max_tokens and retry.'
+                ),
+            },
+            tally.effect(),
+        ],
+    )
+
+
+def _cut_off_result(
+    *, provider, model, text, all_tool_calls, iteration, stop_reason,
+    skipped_tool_calls, tally,
+) -> Dict[str, Any]:
+    return {
+        'ok': True,
+        'data': {
+            'result': text,
+            'tool_calls': all_tool_calls,
+            'iterations': iteration,
+            'model': model,
+            'stop_reason': stop_reason,
+            '__tool_calls__': all_tool_calls,
+            'outcome': _agent_reply_cut_off(
+                provider=provider,
+                model=model,
+                iterations=iteration,
+                stop_reason=stop_reason,
+                skipped_tool_calls=skipped_tool_calls,
+                tally=tally,
+            ),
+        },
+    }
+
+
 @register_module(
     module_id='agent.tool_use',
     stability="beta",
@@ -269,6 +355,21 @@ def _agent_cut_off(
             max=50,
         ),
         field(
+            'max_tokens',
+            type='number',
+            label='Max Tokens',
+            label_key='modules.agent.tool_use.params.max_tokens',
+            description=(
+                'Maximum tokens per model reply. A reply cut off at this limit '
+                'is reported as indeterminate and its tool calls are not run'
+            ),
+            description_key='modules.agent.tool_use.params.max_tokens.description',
+            required=False,
+            default=DEFAULT_MAX_TOKENS,
+            min=1,
+            max=128000,
+        ),
+        field(
             'system_prompt',
             type='string',
             format='multiline',
@@ -307,7 +408,8 @@ def _agent_cut_off(
             'description': (
                 'How far this run was followed into reality: "accepted" when the '
                 'model stopped calling tools and answered, "indeterminate" when '
-                'max_iterations cut the loop off mid-task. A claim about the '
+                'max_iterations cut the loop off mid-task or the provider cut '
+                'a reply off (its tool calls are then not run). A claim about the '
                 'completion only -- the tools this agent ran have outcomes of '
                 'their own and this module discards every one of them'
             ),
@@ -364,6 +466,7 @@ async def agent_tool_use(context: Dict[str, Any]) -> Dict[str, Any]:
     model = params.get('model', 'gpt-4o')
     api_key = params.get('api_key')
     max_iterations = params.get('max_iterations', 10)
+    max_tokens = int(params.get('max_tokens') or DEFAULT_MAX_TOKENS)
     system_prompt = params.get('system_prompt', '')
 
     if not prompt:
@@ -391,10 +494,12 @@ async def agent_tool_use(context: Dict[str, Any]) -> Dict[str, Any]:
         if provider == 'openai':
             return await _run_openai_agent(
                 api_key, model, prompt, tools, max_iterations, system_prompt, context,
+                max_tokens=max_tokens,
             )
         elif provider == 'anthropic':
             return await _run_anthropic_agent(
                 api_key, model, prompt, tools, max_iterations, system_prompt, context,
+                max_tokens=max_tokens,
             )
         else:
             raise ValidationError(
@@ -402,7 +507,7 @@ async def agent_tool_use(context: Dict[str, Any]) -> Dict[str, Any]:
                 field="provider",
             )
     except aiohttp.ClientError as e:
-        raise ModuleError(f"API request failed: {e}")
+        raise ModuleError(f"API request failed: {e}") from e
 
 
 def _format_openai_tools(tools: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -440,6 +545,8 @@ async def _run_openai_agent(
     max_iterations: int,
     system_prompt: str,
     context: Dict[str, Any] = None,
+    *,
+    max_tokens: int = DEFAULT_MAX_TOKENS,
 ) -> Dict[str, Any]:
     """Run the tool-use loop with OpenAI."""
     openai_tools = _format_openai_tools(tools)
@@ -466,6 +573,7 @@ async def _run_openai_agent(
                 "model": model,
                 "messages": messages,
                 "tools": openai_tools,
+                "max_completion_tokens": max_tokens,
             }
 
             async with session.post(
@@ -487,7 +595,21 @@ async def _run_openai_agent(
             messages.append(message)
 
             # If the model wants to call tools
-            tool_calls_in_response = message.get('tool_calls', [])
+            tool_calls_in_response = message.get('tool_calls') or []
+
+            # A cut-off reply is not an answer, and its tool calls may carry
+            # truncated arguments: return before running any of them.
+            if not _reply_is_complete('openai', finish_reason):
+                return _cut_off_result(
+                    provider='openai',
+                    model=data.get('model', model),
+                    text=message.get('content') or '',
+                    all_tool_calls=all_tool_calls,
+                    iteration=iteration,
+                    stop_reason=finish_reason,
+                    skipped_tool_calls=len(tool_calls_in_response),
+                    tally=tally,
+                )
 
             if not tool_calls_in_response or finish_reason == 'stop':
                 # No more tool calls, return final result
@@ -513,30 +635,39 @@ async def _run_openai_agent(
             for tc in tool_calls_in_response:
                 func = tc.get('function', {})
                 tool_name = func.get('name', '')
+                raw_args = func.get('arguments') or '{}'
                 try:
-                    tool_args = json.loads(func.get('arguments', '{}'))
-                except json.JSONDecodeError:
-                    tool_args = {}
+                    tool_args = json.loads(raw_args)
+                    args_error = None if isinstance(tool_args, dict) else (
+                        'tool arguments must be a JSON object'
+                    )
+                except json.JSONDecodeError as e:
+                    tool_args, args_error = None, f'tool arguments are not valid JSON: {e}'
 
                 tool_call_record = {
                     'id': tc.get('id', ''),
                     'name': tool_name,
-                    'arguments': tool_args,
+                    'arguments': tool_args if args_error is None else raw_args,
                     'iteration': iteration,
                 }
                 all_tool_calls.append(tool_call_record)
 
-                # Execute the tool (module) directly
-                try:
-                    tool_exec_result = await execute_tool(
-                        tool_name, tool_args, context or {},
-                    )
-                    tally.record(result=tool_exec_result)
-                    tool_result = json.dumps(tool_exec_result, default=str)
-                except Exception as e:
-                    tally.record(raised=True)
-                    logger.error(f"Tool execution error for {tool_name}: {e}")
-                    tool_result = json.dumps({"error": str(e)})
+                if args_error is not None:
+                    # Never run a tool on arguments that could not be read: the
+                    # old fallback ran it with {} (#152). Tell the model instead.
+                    tool_result = json.dumps({"error": args_error})
+                else:
+                    # Execute the tool (module) directly
+                    try:
+                        tool_exec_result = await execute_tool(
+                            tool_name, tool_args, context or {},
+                        )
+                        tally.record(result=tool_exec_result)
+                        tool_result = json.dumps(tool_exec_result, default=str)
+                    except Exception as e:
+                        tally.record(raised=True)
+                        logger.error(f"Tool execution error for {tool_name}: {e}")
+                        tool_result = json.dumps({"error": str(e)})
 
                 tool_call_record['result'] = tool_result
 
@@ -579,6 +710,8 @@ async def _run_anthropic_agent(
     max_iterations: int,
     system_prompt: str,
     context: Dict[str, Any] = None,
+    *,
+    max_tokens: int = DEFAULT_MAX_TOKENS,
 ) -> Dict[str, Any]:
     """Run the tool-use loop with Anthropic."""
     anthropic_tools = _format_anthropic_tools(tools)
@@ -603,7 +736,7 @@ async def _run_anthropic_agent(
 
             payload: Dict[str, Any] = {
                 "model": model,
-                "max_tokens": 4096,
+                "max_tokens": max_tokens,
                 "messages": messages,
                 "tools": anthropic_tools,
             }
@@ -629,6 +762,23 @@ async def _run_anthropic_agent(
 
             # Check for tool use blocks
             tool_use_blocks = [b for b in content_blocks if b.get('type') == 'tool_use']
+
+            # A cut-off reply is not an answer, and a truncated tool_use block
+            # carries partial input: return before running any of them.
+            if not _reply_is_complete('anthropic', stop_reason):
+                return _cut_off_result(
+                    provider='anthropic',
+                    model=data.get('model', model),
+                    text=''.join(
+                        b.get('text', '') for b in content_blocks
+                        if b.get('type') == 'text'
+                    ),
+                    all_tool_calls=all_tool_calls,
+                    iteration=iteration,
+                    stop_reason=stop_reason,
+                    skipped_tool_calls=len(tool_use_blocks),
+                    tally=tally,
+                )
 
             if not tool_use_blocks or stop_reason == 'end_turn':
                 # No more tool calls, extract final text

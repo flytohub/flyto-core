@@ -12,17 +12,17 @@ from urllib.parse import urlparse
 
 import aiohttp
 
+from ....utils import (
+    PathTraversalError,
+    SSRFError,
+    guarded_aiohttp_request,
+    guarded_client_session,
+    validate_path_with_env_config,
+    validate_url_with_env_config,
+)
+from ...errors import ModuleError
 from ...registry import register_module
 from ...schema import compose, presets
-from ...errors import ModuleError
-from ....utils import (
-    guarded_client_session,
-    validate_url_with_env_config,
-    SSRFError,
-    validate_path_with_env_config,
-    PathTraversalError,
-)
-
 
 logger = logging.getLogger(__name__)
 
@@ -149,21 +149,34 @@ async def image_download(context: Dict[str, Any]) -> Dict[str, Any]:
     try:
         target_real = validate_path_with_env_config(output_path)
     except PathTraversalError as e:
-        raise ModuleError(str(e), code="PATH_TRAVERSAL")
+        raise ModuleError(str(e), code="PATH_TRAVERSAL") from e
 
     Path(os.path.dirname(target_real)).mkdir(parents=True, exist_ok=True)
 
+    # SECURITY: every redirect hop is revalidated (GHSA-3j3m-rp8w-pxpv). A plain
+    # session.get followed 30x Location headers that the initial check never saw.
     async with guarded_client_session() as session:
-        async with session.get(
-            url,
-            headers=default_headers,
-            timeout=aiohttp.ClientTimeout(total=timeout)
-        ) as response:
+        try:
+            response = await guarded_aiohttp_request(
+                session, 'GET', url,
+                headers=default_headers,
+                timeout=aiohttp.ClientTimeout(total=timeout),
+            )
+        except SSRFError as e:
+            logger.warning(f"SSRF protection blocked image download redirect from: {url}")
+            return {
+                'ok': False,
+                'error': str(e),
+                'error_code': 'SSRF_BLOCKED'
+            }
+        try:
             response.raise_for_status()
             content_type = response.headers.get('Content-Type', 'image/jpeg')
             content = await response.read()
-            with open(target_real, 'wb') as f:
-                f.write(content)
+        finally:
+            response.release()
+        with open(target_real, 'wb') as f:
+            f.write(content)
 
     file_size = os.path.getsize(target_real)
     filename = os.path.basename(target_real)

@@ -201,7 +201,12 @@ class APIEndpoints:
         return f"{cls.github_repo(owner, repo)}/issues"
 
     # Google APIs
+    # Google discontinues the Custom Search JSON API on 2027-01-01 and has not
+    # admitted new customers since January 2026. The default stays for keys
+    # that still work; operators point GOOGLE_SEARCH_URL at a compatible
+    # endpoint, or move to core.api.serpapi_search / core.api.tavily_search.
     GOOGLE_SEARCH_URL: str = "https://www.googleapis.com/customsearch/v1"
+    GOOGLE_SEARCH_DISCONTINUED_ON: str = "2027-01-01"
     GOOGLE_GEMINI_BASE_URL: str = "https://generativelanguage.googleapis.com/v1"
 
     @classmethod
@@ -291,6 +296,9 @@ class EnvVars:
     GOOGLE_API_KEY: str = "GOOGLE_API_KEY"
     GOOGLE_AI_API_KEY: str = "GOOGLE_AI_API_KEY"
     GOOGLE_SEARCH_ENGINE_ID: str = "GOOGLE_SEARCH_ENGINE_ID"
+    # Operator override for core.api.google_search: any endpoint that serves
+    # the Custom Search JSON API request/response shape (`customsearch/v1`).
+    GOOGLE_SEARCH_URL: str = "GOOGLE_SEARCH_URL"
     SERPAPI_KEY: str = "SERPAPI_KEY"
     TAVILY_API_KEY: str = "TAVILY_API_KEY"
     STRIPE_API_KEY: str = "STRIPE_API_KEY"

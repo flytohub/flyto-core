@@ -1121,6 +1121,50 @@ def guarded_httpx_client(**kwargs):
     return httpx.AsyncClient(**kwargs)
 
 
+def _check_literal_connect_target(host: str) -> None:
+    """Apply the connect-time policy to a host that is an IP literal.
+
+    aiohttp's ``TCPConnector._resolve_host`` returns IP literals without ever
+    calling the resolver, so ``_SSRFGuardedResolver`` never sees
+    ``http://[::ffff:127.0.0.1]:8080/``. A redirect to such a literal therefore
+    reached internal services from every guarded session that let aiohttp
+    follow redirects (GHSA-3j3m-rp8w-pxpv). This is the same policy the
+    resolver applies, for the one case the resolver is not consulted.
+    """
+    import ipaddress
+
+    bare = (host or '').strip('[]')
+    try:
+        ipaddress.ip_address(bare.split('%', 1)[0])
+    except ValueError:
+        return  # a hostname: the guarded resolver handles it at connect time
+
+    cfg = get_ssrf_config()
+    restricted = cfg.get('restricted_hosts')
+    if restricted is not None and not _host_in_allowlist(bare, restricted):
+        raise SSRFError(
+            f"Connect target is outside the trusted outbound scope: {bare}"
+        )
+    if _is_metadata_ip(bare):
+        raise SSRFError(f"Cloud metadata endpoint blocked at connect time: {bare}")
+    if cfg.get('allow_private', False) or _host_in_allowlist(
+        bare, cfg.get('allowed_hosts')
+    ):
+        return
+    if is_private_ip(bare):
+        raise SSRFError(
+            f"Blocked connect to private IP literal: {bare}. "
+            f"Use FLYTO_ALLOWED_HOSTS for controlled private access."
+        )
+
+
+async def _ssrf_literal_ip_middleware(request, handler):
+    """Client middleware: aiohttp runs it for the first request and for every
+    redirect hop it follows, so a literal-IP ``Location`` is checked too."""
+    _check_literal_connect_target(request.url.host)
+    return await handler(request)
+
+
 def guarded_client_session(**kwargs) -> "aiohttp.ClientSession":
     """``aiohttp.ClientSession`` pinned to the DNS-rebinding-guarded connector.
 
@@ -1128,8 +1172,17 @@ def guarded_client_session(**kwargs) -> "aiohttp.ClientSession":
     kwargs (``timeout=`` etc.) and injects ``connector=ssrf_guarded_connector()``
     unless the caller already supplied a connector. The session owns and closes
     the connector.
+
+    The connector's resolver covers hostnames; IP literals skip the resolver
+    inside aiohttp, so the session also carries a middleware that applies the
+    same policy to them on every request and redirect hop.
     """
     kwargs.setdefault('connector', ssrf_guarded_connector())
+    if ssrf_protection_enabled():
+        kwargs['middlewares'] = (
+            _ssrf_literal_ip_middleware,
+            *tuple(kwargs.get('middlewares') or ()),
+        )
     return aiohttp.ClientSession(**kwargs)
 
 
